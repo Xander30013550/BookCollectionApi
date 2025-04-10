@@ -1,5 +1,6 @@
 ﻿using BookCollectionApi.Model;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Xml.Linq;
 
@@ -7,8 +8,7 @@ namespace BookCollectionApi.Services;
 
 public class BookService
 {
-    private readonly MongoClient mongoClient;
-    private readonly List<Book> _books;
+    private readonly IMongoCollection<Book> _books;
 
     public BookService(
         IOptions<BookStoreDatabaseSettings> bookStoreDatabaseSettings)
@@ -16,40 +16,35 @@ public class BookService
         var mongoClient = new MongoClient(
             bookStoreDatabaseSettings.Value.ConnectionString);
 
-        var dbList = mongoClient.ListDatabaseNames().ToList();
+        var mongoDatabase = mongoClient.GetDatabase(
+            bookStoreDatabaseSettings.Value.DatabaseName);
 
-        var dbName = bookStoreDatabaseSettings.Value.DatabaseName;
-        var dbCollectionName = bookStoreDatabaseSettings.Value.BooksCollectionName;
-
-        var mongoDatabase = mongoClient.GetDatabase(dbName);
-
-        var mongoCollection = mongoDatabase.GetCollection<Book>(dbCollectionName);
-
-        _books = mongoCollection.Find(_ => true).ToList();
+        _books = mongoDatabase.GetCollection<Book>(
+            bookStoreDatabaseSettings.Value.BooksCollectionName);
     }
 
     public async Task<List<Book>> GetBook() =>
-        await Task.FromResult(_books);
+        await _books.Find(_ => true).ToListAsync();
 
-    public async Task<Book?> GetBook(string id) =>
-        await Task.FromResult(_books.FirstOrDefault(x => x.Id == id));
+    public async Task<Book?> GetABook(string id) =>
+        await _books.Find(x => x.Id == id).FirstOrDefaultAsync();
 
     public async Task CreateBook(Book newBook)
     {
-        var mongoDatabase = mongoClient.GetDatabase("BooksLibrary");
-        var mongoCollection = mongoDatabase.GetCollection<Book>("Books");
-        await mongoCollection.InsertOneAsync(newBook);
-
-        _books.Add(newBook);
-        await Task.CompletedTask;
+        if (newBook.Id == null || newBook.Id =="string" )
+        {
+            var objectId = ObjectId.GenerateNewId();
+            string objectIdString = objectId.ToString();
+            newBook.Id = objectIdString;
+        }
+            await _books.InsertOneAsync(newBook);
     }
 
 
-    //public async Task UpdateBook(string id, Book updatedBook)
-    //{
+    public async Task UpdateBook(string id, Book updatedBook) =>
+        await _books.ReplaceOneAsync(x => x.Id == id, updatedBook);
 
-    //}
+    public async Task RemoveBook(string id) =>
+        await _books.DeleteOneAsync(x => x.Id == id);
 
-    //public async Task RemoveBook(string id) =>
-    //    await _booksCollection.DeleteOneAsync(x => x.Id == id);
 }
