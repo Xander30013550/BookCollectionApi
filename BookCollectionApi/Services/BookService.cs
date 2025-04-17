@@ -1,7 +1,11 @@
 ﻿using BookCollectionApi.Model;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace BookCollectionApi.Services;
@@ -23,8 +27,18 @@ public class BookService
             bookStoreDatabaseSettings.Value.BooksCollectionName);
     }
 
-    public async Task<List<Book>> GetBook() =>
-        await _books.Find(_ => true).ToListAsync();
+    public async Task<List<Book>> GetBooks([FromQuery] QueryParameters queryParameters)
+    {
+        IQueryable<Book> booksQuery = _books.AsQueryable();
+        booksQuery = booksQuery.Skip(queryParameters.Size *(queryParameters.Page - 1))
+                     .Take(queryParameters.Size);
+
+        // Sort the booksQuery by desc or asc using Title 
+
+
+        return await booksQuery.ToListAsync();
+    }
+
 
     public async Task<Book?> GetABook(string id) =>
         await _books.Find(x => x.Id == id).FirstOrDefaultAsync();

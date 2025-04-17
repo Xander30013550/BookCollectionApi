@@ -21,8 +21,23 @@ namespace BookCollectionApi.Controllers
 
         // Return All Books
         [HttpGet]
-        public async Task<List<Book>> Get() =>
-            await _booksService.GetBook();
+        public async Task<ActionResult> GetAllBooks([FromQuery]QueryParameters queryParameters)
+        {
+            try
+            {
+                var books = await _booksService.GetBooks(queryParameters);
+                if (books == null || !books.Any())
+                {
+                    return NoContent(); 
+                }
+
+                return Ok(books);  
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error: " + ex.Message); 
+            }
+        }
 
 
 
@@ -36,31 +51,18 @@ namespace BookCollectionApi.Controllers
 
 
 
-        //// Filter search through all and return all matching results
-        //[HttpGet]
-        //public async Task<ActionResult> FilterBookSearch([FromQuery] BookQueryParamaters queryParamaters)
-        //{
-
-
-        //}
-
-
-
-
-
-
         // Creates a book with user inputs
         [HttpPost]
         public async Task<IActionResult> CreateBook(Book aBook)
         {
             await _booksService.CreateBook(aBook);
-            return CreatedAtAction(nameof(Get), new { id = aBook.Id }, aBook);
+            return CreatedAtAction(nameof(GetBook), new { id = aBook.Id }, aBook);
         }
 
 
         // Searches for book and replaces it, if book not found throws error...
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, Book updateBook)
+        public async Task<IActionResult> UpdateBook(string id, Book updateBook)
         {
             try
             {
@@ -76,13 +78,35 @@ namespace BookCollectionApi.Controllers
         }
 
         // Searches book ObjectID and deletes the book found, returns Not Found it no book found.
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteBook(string idOne, string? idTwo = null, string? idThree = null)
         {
             try
             {
-                var book = _booksService.GetABook(id);
-                await _booksService.RemoveBook(id);
+                var book = await _booksService.GetABook(idOne);
+                if (book != null)
+                {
+                    await _booksService.RemoveBook(idOne);
+                }
+
+                if (idTwo != null)
+                {
+                    book = await _booksService.GetABook(idTwo);
+                    if (book != null)
+                    {
+                        await _booksService.RemoveBook(idTwo);
+                    }
+                }
+
+                if (idThree != null)
+                {
+                    book = await _booksService.GetABook(idThree);
+                    if (book != null)
+                    {
+                        await _booksService.RemoveBook(idThree);
+                    }
+                }
+
                 return NoContent();
             }
             catch(Exception ex)

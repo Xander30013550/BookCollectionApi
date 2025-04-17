@@ -7,8 +7,5 @@
         public string language { get; set; } = string.Empty;
         public string genre { get; set; } = string.Empty;
 
-        public string searchTerm { get; set; } = string.Empty;
-
-
     }
 }

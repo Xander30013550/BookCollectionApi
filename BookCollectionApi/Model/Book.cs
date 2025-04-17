@@ -12,13 +12,13 @@ namespace BookCollectionApi.Model
         public string? Id { get; set; }
 
         [BsonElement("Book")]
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; set; }
 
         [BsonElement("Author(s)")]
-        public string Author { get; set; } = string.Empty;
+        public string Author { get; set; }
 
         [BsonElement("Original language")]
-        public string Language { get; set; } = string.Empty;
+        public string Language { get; set; }
 
         [BsonElement("First published")]
         public int PublishDate { get; set; }
@@ -27,6 +27,6 @@ namespace BookCollectionApi.Model
         public double Sales { get; set; }
 
         [BsonElement("Genre")]
-        public string Genre { get; set; } = string.Empty;
+        public string Genre { get; set; }
     }
 }
