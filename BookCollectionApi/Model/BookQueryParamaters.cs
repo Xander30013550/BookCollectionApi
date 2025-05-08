@@ -2,10 +2,10 @@
 {
     public class BookQueryParamaters : QueryParameters
     {
-        public string title { get; set; } = string.Empty;
-        public string author { get; set; } = string.Empty;
-        public string language { get; set; } = string.Empty;
-        public string genre { get; set; } = string.Empty;
+        public string? title { get; set; } = String.Empty;
+        public string? author { get; set; } = String.Empty;
+        public string? language { get; set; } = String.Empty;
+        public string? genre { get; set; } = String.Empty;
 
     }
 }

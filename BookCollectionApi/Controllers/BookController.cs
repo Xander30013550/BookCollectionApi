@@ -15,13 +15,12 @@ namespace BookCollectionApi.Controllers
             _booksService = booksService;
 
         // ADD ERROR HANDLING FOR ALL BELOW
-        // MAKE A FILTER METHOD
         // Q4 read for filter
 
 
         // Return All Books
         [HttpGet]
-        public async Task<ActionResult> GetAllBooks([FromQuery]QueryParameters queryParameters)
+        public async Task<ActionResult> GetAllBooks([FromQuery]BookQueryParamaters queryParameters)
         {
             try
             {
