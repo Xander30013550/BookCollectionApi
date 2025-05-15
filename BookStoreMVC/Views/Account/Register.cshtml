@@ -1,0 +1,8 @@
+﻿@model BookStoreMVC.Models.UserViewModel
+
+<form asp-action="Register" method="post">
+    <input asp-for="Email" placeholder="Email" />
+    <input asp-for="Password" placeholder="Password" type="password" />
+    <button type="submit">Register</button>
+    <div>@ViewBag.Error</div>
+</form>

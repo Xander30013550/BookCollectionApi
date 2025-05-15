@@ -1,0 +1,37 @@
+﻿@using BookCollectionApi
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Books For Sale!</h1>
+    <p>Learn about all our Books</p>
+</div>
+
+<ul id="book-List"></ul>
+
+
+@section Scripts {
+    <script>
+        let url = "https://localhost:7270/api/book?size=1000&page=1";
+        let productsList = document.getElementById("book-List");
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => showBooks(data))
+            .catch(ex => {
+                alert("Error!");
+                console.error(ex);
+            });
+
+        function showBooks(books) {
+            books.forEach(book => {
+                let li = document.createElement("li");
+                let text = `${book.title} by ${book.author} (${book.author})`;
+                li.appendChild(document.createTextNode(text));
+                productsList.appendChild(li);
+            });
+        }
+    </script>
+}
