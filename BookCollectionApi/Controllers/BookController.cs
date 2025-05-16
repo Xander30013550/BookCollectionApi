@@ -2,9 +2,12 @@
 using BookCollectionApi.Model;
 using BookCollectionApi.Services;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 
 namespace BookCollectionApi.Controllers
 {
+    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
     [Route("api/[controller]")]
     [ApiController]
     public class BookController : ControllerBase
@@ -14,43 +17,57 @@ namespace BookCollectionApi.Controllers
         public BookController(BookService booksService) =>
             _booksService = booksService;
 
-        // ADD ERROR HANDLING FOR ALL BELOW
-        // Q4 read for filter
 
 
-        // Return All Books
+
+        // This method returns all books, optionally filtered by query parameters.
+        // If no books are found, it returns NoContent.
+        [ApiVersion("1.0")]
+        [ApiVersion("2.0")]
         [HttpGet]
-        public async Task<ActionResult> GetAllBooks([FromQuery]BookQueryParamaters queryParameters)
+        public async Task<ActionResult> GetAllBooks([FromQuery] BookQueryParamaters queryParameters)
         {
             try
             {
                 var books = await _booksService.GetBooks(queryParameters);
                 if (books == null || !books.Any())
                 {
-                    return NoContent(); 
+                    return NoContent();
                 }
 
-                return Ok(books);  
+                return Ok(books);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message); 
+                return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
 
 
 
-        // Search Individual Book with ID
+        // This method returns a single book by its ID.
+        // If the book is not found, it returns null.
+        [ApiVersion("1.0")]
+        [ApiVersion("2.0")]
         [HttpGet, Route("/api/[controller]/{id}")]
-        public async Task<Book> GetBook(string id)
+        public async Task<ActionResult<Book>> GetBook(string id)
         {
-            Book? searchedBook = await _booksService.GetABook(id);
-            return searchedBook;
+            try
+            {
+                Book? searchedBook = await _booksService.GetABook(id);
+                return Ok(searchedBook);
+            }
+            catch (Exception ex)
+            {
+                return NotFound();
+            }
         }
 
 
 
-        // Creates a book with user inputs
+        // This method creates a new book record using provided data.
+        // Returns a 201 Created response with a reference to the new book.
+        [ApiVersion("1.0")]
         [HttpPost]
         public async Task<IActionResult> CreateBook(Book aBook)
         {
@@ -59,7 +76,10 @@ namespace BookCollectionApi.Controllers
         }
 
 
-        // Searches for book and replaces it, if book not found throws error...
+
+        // This method updates a book by its ID with new data.
+        // If the book is not found, it returns NotFound.
+        [ApiVersion("1.0")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBook(string id, Book updateBook)
         {
@@ -76,7 +96,10 @@ namespace BookCollectionApi.Controllers
             }
         }
 
-        // Searches book ObjectID and deletes the book found, returns Not Found it no book found.
+
+        // This method deletes up to three books based on given IDs.
+        // Returns NoContent if deletions are successful or NotFound otherwise.
+        [ApiVersion("1.0")]
         [HttpDelete]
         public async Task<IActionResult> DeleteBook(string idOne, string? idTwo = null, string? idThree = null)
         {
@@ -108,7 +131,7 @@ namespace BookCollectionApi.Controllers
 
                 return NoContent();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return NotFound();
             }
