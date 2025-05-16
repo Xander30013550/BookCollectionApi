@@ -1,46 +1,94 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
-using BookStoreMVC.Models;
+﻿using BookStoreMVC.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Security.Claims;
+using BCrypt.Net;
+using MongoDB.Driver;
 
 namespace BookStoreMVC.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly HttpClient _client;
+        private readonly MongoDbContext _context;
 
-        public AccountController(IHttpClientFactory factory)
+        public AccountController (MongoDbContext context)
         {
-            _client = factory.CreateClient("ApiClient");
+            _context = context;
         }
 
-        [HttpGet]
+        [AllowAnonymous]
         public IActionResult Register() => View();
 
-        [HttpPost]
-        public async Task<IActionResult> Register(UserViewModel model)
-        {
-            var response = await _client.PostAsJsonAsync("api/user/register", model);
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction("Login");
-
-            ViewBag.Error = await response.Content.ReadAsStringAsync();
-            return View(model);
-        }
-
-        [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Login(UserViewModel model)
+        [ValidateAntiForgeryToken]
+        public IActionResult Register(RegisterViewModel model)
         {
-            var response = await _client.PostAsJsonAsync("api/user/login", model);
-            if (response.IsSuccessStatusCode)
-                return RedirectToAction("Welcome");
+            if (ModelState.IsValid)
+            {
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
+                var user = new User
+                {
+                    Username = model.Username,
+                    Email = model.Email,
+                    Password = hashedPassword
+                };
 
-            ViewBag.Error = await response.Content.ReadAsStringAsync();
+                _context.Users.InsertOneAsync(user);
+                return RedirectToAction("Success");
+            }
+
             return View(model);
         }
 
-        public IActionResult Welcome() => View();
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = _context.Users.Find(u => u.Email == model.Email).FirstOrDefault();
+
+                if (user != null && BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
+                {
+                    var Claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, user.Username),
+                        new Claim(ClaimTypes.Email, user.Email)
+                    };
+
+                    var identity = new ClaimsIdentity(Claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principle = new ClaimsPrincipal(identity);
+
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principle);
+                    return RedirectToAction("Dashboard", "Account");
+                }
+
+                ModelState.AddModelError("", "Invalid login attempt..,");
+            }
+            return View(model);
+        }
+
+
+        public IActionResult Success() => View();
+
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+
+        [Authorize]
+        public IActionResult Dashboard()
+        {
+            var username = User.Identity?.Name;
+            return View(model: username);
+        }
+
     }
 }
