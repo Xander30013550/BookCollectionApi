@@ -8,29 +8,20 @@
         public int Size
         {
             get { return _pageSize; }
-            set
-            {
-                _pageSize = Math.Min(_maxSize, value);
-            }
+            set { _pageSize = Math.Min(_maxSize, value); }
         }
 
         private string sortOrder = "asc";
         public string SortOrder
         {
-            get
-            {
-                return sortOrder;
-            }
+            get { return sortOrder; }
             set
             {
                 if (value == "asc" || value == "desc")
-                {
                     sortOrder = value;
-                }
             }
         }
 
-
-
+        public string SortBy { get; set; } = "Title"; // Default sort field
     }
 }

@@ -32,10 +32,7 @@ public class BookService
         var filtered = new List<FilterDefinition<Book>>();
         var builder = Builders<Book>.Filter;
 
-        IQueryable<Book> booksQuery = _books.AsQueryable();
-        booksQuery = booksQuery.Skip(queryParameters.Size *(queryParameters.Page - 1))
-                     .Take(queryParameters.Size);
-
+        // Build filters
         if (!string.IsNullOrEmpty(queryParameters.author))
         {
             filtered.Add(builder.Regex(c => c.Author, new BsonRegularExpression(queryParameters.author, "i")));
@@ -53,17 +50,22 @@ public class BookService
             filtered.Add(builder.Regex(c => c.Genre, new BsonRegularExpression(queryParameters.genre, "i")));
         }
 
+        var combinedFilter = filtered.Count > 0 ? builder.And(filtered) : builder.Empty;
 
-
-        FilterDefinition<Book> combinedFilter = filtered.Count > 0 ? builder.And(filtered) : builder.Empty;
+        var sortBuilder = Builders<Book>.Sort;
+        var sortDefinition = queryParameters.SortOrder.ToLower() == "desc"
+            ? sortBuilder.Descending(queryParameters.SortBy)
+            : sortBuilder.Ascending(queryParameters.SortBy);
 
         var result = await _books.Find(combinedFilter)
-                                  .Skip(queryParameters.Size * (queryParameters.Page - 1))
-                                  .Limit(queryParameters.Size)
-                                  .ToListAsync();
+                                 .Sort(sortDefinition)
+                                 .Skip(queryParameters.Size * (queryParameters.Page - 1))
+                                 .Limit(queryParameters.Size)
+                                 .ToListAsync();
 
         return result;
     }
+
 
 
     public async Task<Book?> GetABook(string id) =>

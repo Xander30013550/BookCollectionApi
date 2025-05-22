@@ -8,7 +8,7 @@ namespace BookCollectionApi.Controllers
 {
     [ApiVersion("1.0")]
     [ApiVersion("2.0")]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     public class BookController : ControllerBase
     {
@@ -22,8 +22,8 @@ namespace BookCollectionApi.Controllers
 
         // This method returns all books, optionally filtered by query parameters.
         // If no books are found, it returns NoContent.
-        [ApiVersion("1.0")]
-        [ApiVersion("2.0")]
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("2.0")]
         [HttpGet]
         public async Task<ActionResult> GetAllBooks([FromQuery] BookQueryParamaters queryParameters)
         {
@@ -47,15 +47,14 @@ namespace BookCollectionApi.Controllers
 
         // This method returns a single book by its ID.
         // If the book is not found, it returns null.
-        [ApiVersion("1.0")]
-        [ApiVersion("2.0")]
-        [HttpGet, Route("/api/[controller]/{id}")]
+        [MapToApiVersion("1.0")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(string id)
         {
             try
             {
                 Book? searchedBook = await _booksService.GetABook(id);
-                return Ok(searchedBook);
+                return searchedBook != null ? Ok(searchedBook) : NotFound();
             }
             catch (Exception ex)
             {
@@ -65,9 +64,10 @@ namespace BookCollectionApi.Controllers
 
 
 
+
         // This method creates a new book record using provided data.
         // Returns a 201 Created response with a reference to the new book.
-        [ApiVersion("1.0")]
+        [MapToApiVersion("1.0")]
         [HttpPost]
         public async Task<IActionResult> CreateBook(Book aBook)
         {
@@ -79,7 +79,7 @@ namespace BookCollectionApi.Controllers
 
         // This method updates a book by its ID with new data.
         // If the book is not found, it returns NotFound.
-        [ApiVersion("1.0")]
+        [MapToApiVersion("1.0")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBook(string id, Book updateBook)
         {
@@ -99,9 +99,12 @@ namespace BookCollectionApi.Controllers
 
         // This method deletes up to three books based on given IDs.
         // Returns NoContent if deletions are successful or NotFound otherwise.
-        [ApiVersion("1.0")]
+        [MapToApiVersion("1.0")]
         [HttpDelete]
-        public async Task<IActionResult> DeleteBook(string idOne, string? idTwo = null, string? idThree = null)
+        public async Task<IActionResult> DeleteBook(
+        [FromQuery] string idOne,
+        [FromQuery] string? idTwo = null,
+        [FromQuery] string? idThree = null)
         {
             try
             {
@@ -136,5 +139,6 @@ namespace BookCollectionApi.Controllers
                 return NotFound();
             }
         }
+
     }
 }

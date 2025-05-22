@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddRouting(options =>
+{
+    options.ConstraintMap["apiVersion"] = typeof(Asp.Versioning.Routing.ApiVersionRouteConstraint);
+});
+
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
